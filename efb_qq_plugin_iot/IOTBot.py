@@ -191,7 +191,7 @@ class iot(BaseClient):
             friend_remark = friend['Remark']
             new_friend = EFBPrivateChat(
                 channel=self.channel,
-                uid=f"private_{friend_uin}",
+                uid=f"friend_{friend_uin}",
                 name=friend_name,
                 alias=friend_remark
             )
@@ -252,7 +252,7 @@ class iot(BaseClient):
             chat_uin = int(chat_attr)
             remark_name = self.get_friend_remark(chat_uin)
             chat = build_efb_chat_as_private(EFBPrivateChat(
-                uid=chat_uin,
+                uid=chat_attr,
                 name=remark_name if remark_name else "",
                 channel=self.channel  # fixme: channel should be moved to upper class(efb-qq-slave)
             ))
