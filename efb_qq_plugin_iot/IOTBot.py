@@ -82,7 +82,7 @@ class iot(BaseClient):
             # Splitting messages
             messages: List[Message] = []
             func = getattr(self.iot_msg, f'iot_{ctx.MsgType}_friend')
-            messages.extend(func(ctx))
+            messages.extend(func(ctx, chat))
 
             # Sending messages one by one
             uid: str = str(uuid.uuid4())
@@ -120,7 +120,7 @@ class iot(BaseClient):
             # Splitting messages
             messages: List[Message] = []
             func = getattr(self.iot_msg, f'iot_{ctx.MsgType}_group')
-            messages.extend(func(ctx))
+            messages.extend(func(ctx, chat))
 
             # Sending messages one by one
             uid: str = str(uuid.uuid4())
