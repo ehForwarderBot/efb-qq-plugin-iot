@@ -37,8 +37,8 @@ class iot(BaseClient,Action):
     stranger_cache = TTLCache(maxsize=100, ttl=3600)
 
     def __init__(self, client_id: str, config: Dict[str, Any], channel):
-        BaseClient.__init__(client_id, config)
-        Action.__init__(qq=self.client_config['qq'],host=self.client_config['host'],port=self.client_config['port'])
+        BaseClient.__init__(self,client_id, config)
+        Action.__init__(self,qq=self.client_config['qq'],host=self.client_config['host'],port=self.client_config['port'])
         self.client_config = config[self.client_id]
         self.uin = self.client_config['qq']
         self.host = self.client_config['host']
@@ -309,9 +309,9 @@ class iot(BaseClient,Action):
         All=[]
         for start in lis:
             data = self.post('GetQQUserList', {'StartIndex': start})
-            [All.append(friend) for friend in data]
+            [All.append(friend) for friend in data['Friendlist']]
             All=[dict(t) for t in set([tuple(d.items()) for d in All])]
-        if 'Friendlist' in data:
+        if All:
             return All
         return []
 
