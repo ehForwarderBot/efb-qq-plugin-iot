@@ -110,7 +110,7 @@ class IOTMsgProcessor:
         at_list = {}
         if self.uin in refine_at.AtUserID:  # Being mentioned
             begin_index = len(quote_text)
-            quote_text += '@me'
+            quote_text += ' @me'
             end_index = len(quote_text)
             at_list[(begin_index, end_index)] = chat.self
         return [efb_text_simple_wrapper(quote_text, at_list)]
@@ -176,7 +176,7 @@ class IOTMsgProcessor:
         at_list = {}
         if self.uin in refine_reply.AtUserID:  # Being mentioned
             begin_index = len(quote_text)
-            quote_text += '@me'
+            quote_text += ' @me'
             end_index = len(quote_text)
             at_list[(begin_index, end_index)] = chat.self
         return [efb_text_simple_wrapper(quote_text, at_list)]
