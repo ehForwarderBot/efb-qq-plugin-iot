@@ -46,7 +46,7 @@ class iot(BaseClient):
         self.bot = Botoy(qq=self.uin, host=self.host, port=self.port)
         self.action = Action(qq=self.uin, host=self.host, port=self.port)
         self.channel = channel
-        self.iot_msg = IOTMsgProcessor()
+        self.iot_msg = IOTMsgProcessor(self.uin)
 
         @self.bot.when_connected
         def on_ws_connected():
