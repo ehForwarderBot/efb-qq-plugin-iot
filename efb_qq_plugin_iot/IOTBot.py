@@ -38,11 +38,11 @@ class iot(BaseClient,Action):
 
     def __init__(self, client_id: str, config: Dict[str, Any], channel):
         BaseClient.__init__(self,client_id, config)
-        Action.__init__(self,qq=self.client_config['qq'],host=self.client_config['host'],port=self.client_config['port'])
         self.client_config = config[self.client_id]
         self.uin = self.client_config['qq']
         self.host = self.client_config['host']
         self.port = self.client_config['port']
+        Action.__init__(self,qq=self.uin,host=self.host,port=self.port)
         self.bot = Botoy(qq=self.uin, host=self.host, port=self.port)
         self.action = Action(qq=self.uin, host=self.host, port=self.port)
         self.channel = channel
