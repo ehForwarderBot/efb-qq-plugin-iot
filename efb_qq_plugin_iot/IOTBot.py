@@ -311,7 +311,6 @@ class iot(BaseClient,Action):
             data = self.post('GetQQUserList', {'StartIndex': start})
             [All.append(friend) for friend in data['Friendlist']]
             All=[dict(t) for t in set([tuple(d.items()) for d in All])]
-        self.logger.debug(All)
         if All:
             return All
         return []
