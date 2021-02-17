@@ -20,8 +20,7 @@ from efb_qq_plugin_iot.CustomTypes import IOTGroup, EFBGroupChat, EFBPrivateChat
     EFBGroupMember
 from efb_qq_plugin_iot.Utils import download_user_avatar, download_group_avatar, iot_at_user, process_quote_text
 
-
-class iot(BaseClient):
+class iot(BaseClient,Action):
     client_name: str = "IOTbot Client"
     client_id: str = "iot"
     client_config: Dict[str, Any]
@@ -38,7 +37,8 @@ class iot(BaseClient):
     stranger_cache = TTLCache(maxsize=100, ttl=3600)
 
     def __init__(self, client_id: str, config: Dict[str, Any], channel):
-        super().__init__(client_id, config)
+        BaseClient.__init__(client_id, config)
+        Action.__init__(qq=self.client_config['qq'],host=self.client_config['host'],port=self.client_config['port'])
         self.client_config = config[self.client_id]
         self.uin = self.client_config['qq']
         self.host = self.client_config['host']
@@ -302,7 +302,18 @@ class iot(BaseClient):
         Update friend list from OPQBot
 
         """
-        self.info_list['friend'] = self.action.getUserList()
+        self.info_list['friend'] = getUserList()
+
+    def getUserList():
+        lis=[0,100,200,300,400,500]
+        All=[]
+        for start in lis:
+            data = self.post('GetQQUserList', {'StartIndex': start})
+            [All.append(friend) for friend in data]
+            All=[dict(t) for t in set([tuple(d.items()) for d in All])]
+        if 'Friendlist' in data:
+            return All
+        return []
 
     def update_group_list(self):
         self.info_list['group'] = self.action.getGroupList()
