@@ -302,9 +302,9 @@ class iot(BaseClient,Action):
         Update friend list from OPQBot
 
         """
-        self.info_list['friend'] = getUserList()
+        self.info_list['friend'] = self.getUserList()
 
-    def getUserList():
+    def getUserList(self):
         lis=[0,100,200,300,400,500]
         All=[]
         for start in lis:
