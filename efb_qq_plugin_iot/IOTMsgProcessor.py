@@ -175,6 +175,7 @@ class IOTMsgProcessor:
             quote_text = "[Missing message]"
         at_list = {}
         if self.uin in refine_reply.AtUserID:  # Being mentioned
+            # todo Use msg.target for reply message
             begin_index = len(quote_text)
             quote_text += ' @me'
             end_index = len(quote_text)

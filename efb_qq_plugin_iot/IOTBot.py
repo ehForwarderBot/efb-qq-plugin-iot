@@ -85,12 +85,11 @@ class iot(BaseClient):
             messages.extend(func(ctx, chat))
 
             # Sending messages one by one
-            uid: str = str(uuid.uuid4())
             message_id = ctx.MsgSeq
             for idx, val in enumerate(messages):
                 if not isinstance(val, Message):
                     continue
-                val.uid = f"{uid}_{message_id}_{idx}"
+                val.uid = f"friend_{ctx.FromUin}_{message_id}_{idx}"
                 val.chat = chat
                 val.author = author
                 val.deliver_to = coordinator.master
@@ -123,12 +122,11 @@ class iot(BaseClient):
             messages.extend(func(ctx, chat))
 
             # Sending messages one by one
-            uid: str = str(uuid.uuid4())
             message_id = ctx.MsgSeq
             for idx, val in enumerate(messages):
                 if not isinstance(val, Message):
                     continue
-                val.uid = f"{uid}_{message_id}_{idx}"
+                val.uid = f"group_{ctx.FromGroupId}_{message_id}_{idx}"
                 val.chat = chat
                 val.author = author
                 val.deliver_to = coordinator.master
