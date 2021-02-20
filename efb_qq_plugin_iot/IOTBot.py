@@ -14,8 +14,9 @@ from ehforwarderbot.types import ChatID
 
 from botoy import Botoy, GroupMsg, FriendMsg, EventMsg, Action
 
+from efb_qq_plugin_iot.IOTConfig import IOTConfig
 from efb_qq_plugin_iot.IOTMsgProcessor import IOTMsgProcessor
-from efb_qq_plugin_iot.ChatMgr import build_efb_chat_as_group, build_efb_chat_as_private, build_efb_chat_as_member
+from efb_qq_plugin_iot.ChatMgr import ChatMgr
 from efb_qq_plugin_iot.CustomTypes import IOTGroup, EFBGroupChat, EFBPrivateChat, IOTGroupMember, \
     EFBGroupMember
 from efb_qq_plugin_iot.Utils import download_user_avatar, download_group_avatar, iot_at_user, process_quote_text
@@ -41,12 +42,14 @@ class iot(BaseClient):
         super().__init__(client_id, config)
         self.client_config = config[self.client_id]
         self.uin = self.client_config['qq']
-        self.host = self.client_config['host']
-        self.port = self.client_config['port']
+        self.host = self.client_config.get('host', 'http://127.0.0.1')
+        self.port = self.client_config.get('port', 8888)
+        IOTConfig.configs = self.client_config
         self.bot = Botoy(qq=self.uin, host=self.host, port=self.port)
         self.action = Action(qq=self.uin, host=self.host, port=self.port)
         self.channel = channel
         self.iot_msg = IOTMsgProcessor(self.uin)
+        slave_channel = self.channel
 
         @self.bot.when_connected
         def on_ws_connected():
@@ -59,6 +62,9 @@ class iot(BaseClient):
         @self.bot.on_friend_msg
         def on_friend_msg(ctx: FriendMsg):
             self.logger.debug(ctx)
+            if int(ctx.FromUin) == self.uin and IOTConfig.configs.get('receive_self_msg', False):
+                self.logger.info("Received self message and flag set. Cancel delivering...")
+                return
             remark_name = self.get_friend_remark(ctx.FromUin)
             if not remark_name:
                 info = self.get_stranger_info(ctx.FromUin)
@@ -72,10 +78,9 @@ class iot(BaseClient):
                 chat_uid = f'phone_{ctx.FromUin}'
             else:
                 chat_uid = f'friend_{ctx.FromUin}'
-            chat = build_efb_chat_as_private(EFBPrivateChat(
+            chat = ChatMgr.build_efb_chat_as_private(EFBPrivateChat(
                 uid=chat_uid,
                 name=remark_name,
-                channel=self.channel  # fixme: channel should be moved to upper class(efb-qq-slave)
             ))
             author = chat.other
 
@@ -106,12 +111,11 @@ class iot(BaseClient):
                 info = self.get_stranger_info(ctx.FromUserId)
                 if info:
                     remark_name = info.get('nickname', '')
-            chat = build_efb_chat_as_group(EFBGroupChat(
-                channel=self.channel,
+            chat = ChatMgr.build_efb_chat_as_group(EFBGroupChat(
                 uid=f"group_{ctx.FromGroupId}",
                 name=ctx.FromGroupName
             ))
-            author = build_efb_chat_as_member(chat, EFBGroupMember(
+            author = ChatMgr.build_efb_chat_as_member(chat, EFBGroupMember(
                 name=nickname,
                 alias=remark_name,
                 uid=str(ctx.FromUserId)
@@ -194,7 +198,7 @@ class iot(BaseClient):
                 alias=friend_remark
             )
             self.info_dict['friend'][friend_uin] = friend
-            friends.append(build_efb_chat_as_private(new_friend))
+            friends.append(ChatMgr.build_efb_chat_as_private(new_friend))
         return friends
 
     def get_groups(self) -> List['Chat']:
@@ -211,7 +215,7 @@ class iot(BaseClient):
                 name=group_name
             )
             self.info_dict['group'][group_id] = IOTGroup(group)
-            groups.append(build_efb_chat_as_group(new_group))
+            groups.append(ChatMgr.build_efb_chat_as_group(new_group))
         return groups
 
     def get_login_info(self) -> Dict[Any, Any]:
@@ -249,17 +253,15 @@ class iot(BaseClient):
         if chat_type == 'friend':
             chat_uin = int(chat_attr)
             remark_name = self.get_friend_remark(chat_uin)
-            chat = build_efb_chat_as_private(EFBPrivateChat(
+            chat = ChatMgr.build_efb_chat_as_private(EFBPrivateChat(
                 uid=chat_attr,
                 name=remark_name if remark_name else "",
-                channel=self.channel  # fixme: channel should be moved to upper class(efb-qq-slave)
             ))
         elif chat_type == 'group':
             chat_uin = int(chat_attr)
             group_info = self.get_group_info(chat_uin, no_cache=False)
             group_members = self.get_group_member_list(chat_uin, no_cache=False)
-            chat = build_efb_chat_as_group(EFBGroupChat(
-                channel=self.channel,
+            chat = ChatMgr.build_efb_chat_as_group(EFBGroupChat(
                 uid=f"group_{chat_uin}",
                 name=group_info.get('GroupName', "")
             ), group_members)
