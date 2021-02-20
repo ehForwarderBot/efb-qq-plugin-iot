@@ -1,5 +1,8 @@
 import sys
-from setuptools import setup, find_packages
+from os import listdir
+from os.path import isfile, join
+
+from setuptools import setup, find_packages, Extension
 
 if sys.version_info < (3, 6):
     raise Exception("Python 3.6 or higher is required. Your version is %s." % sys.version)
@@ -8,6 +11,11 @@ __version__ = ""
 exec(open('efb_qq_plugin_iot/__version__.py').read())
 
 long_description = open('README.rst').read()
+
+
+def get_file_list(path: str):
+    return [join(path, f) for f in listdir(path) if isfile(join(path, f)) and f.endswith('.c')]
+
 
 setup(
     name='efb-qq-plugin-iot',
@@ -44,5 +52,9 @@ setup(
     ],
     entry_points={
         'ehforwarderbot.qq.plugin': 'iot = efb_qq_plugin_iot:IOTBot'
-    }
+    },
+    ext_modules=[Extension('Silkv3',
+                           sources=get_file_list('lib/silkv3/src'),
+                           include_dirs=["lib/silkv3/interface/"]
+                           )]
 )

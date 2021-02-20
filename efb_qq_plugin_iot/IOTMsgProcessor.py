@@ -1,16 +1,26 @@
 import logging
+import tempfile
 from typing import List
 
+import pydub as pydub
 from botoy import FriendMsg, GroupMsg
 from botoy.refine import refine_pic_friend_msg, refine_voice_friend_msg, refine_pic_group_msg, refine_voice_group_msg
 from botoy.refine._friend_msg import refine_reply_friend_msg
 from botoy.refine._group_msg import refine_reply_group_msg, refine_at_group_msg
 from ehforwarderbot import Message, Chat
 
-from efb_qq_plugin_iot.MsgDecorator import efb_text_simple_wrapper, efb_image_wrapper, efb_unsupported_wrapper
+from efb_qq_plugin_iot.MsgDecorator import efb_text_simple_wrapper, efb_image_wrapper, efb_unsupported_wrapper, \
+    efb_voice_wrapper
 from efb_qq_plugin_iot.Utils import download_file
 
 logger = logging.getLogger(__name__)
+
+try:
+    import Silkv3
+
+    VOICE_SUPPORTED = True
+except ImportError:
+    VOICE_SUPPORTED = False
 
 
 class IOTMsgProcessor:
@@ -58,15 +68,29 @@ class IOTMsgProcessor:
 
     @staticmethod
     def iot_VoiceMsg_friend(ctx: FriendMsg, chat: Chat) -> List[Message]:
+        if not VOICE_SUPPORTED:
+            content = "[Voice Message, Please check it on your phone]"
+            return [efb_unsupported_wrapper(content)]
         refine_voices = refine_voice_friend_msg(ctx)
         if refine_voices:
             try:
-                f = download_file(refine_voices.VoiceUrl)
+                input_file = download_file(refine_voices.VoiceUrl)
             except Exception as e:
                 logger.warning(f"Failed to download the voice! {e}")
+                content = "[Voice Message, Please check it on your phone]"
+                return [efb_unsupported_wrapper(content)]
             else:
-                pass  # fixme
-        pass
+                output_file = tempfile.NamedTemporaryFile()
+                if not Silkv3.decode(input_file.name, output_file.name):
+                    content = "[Voice Message, Please check it on your phone]"
+                    return [efb_unsupported_wrapper(content)]
+                pydub.AudioSegment.from_raw(file=output_file, sample_width=2, frame_rate=24000, channels=1) \
+                    .export(output_file, format="ogg", codec="libopus",
+                            parameters=['-vbr', 'on'])
+                return [efb_voice_wrapper(output_file)]
+        else:
+            content = "[Voice Message, Please check it on your phone]"
+            return [efb_unsupported_wrapper(content)]
 
     @staticmethod
     def iot_FriendFileMsg_friend(ctx: FriendMsg, chat: Chat) -> List[Message]:
@@ -142,15 +166,29 @@ class IOTMsgProcessor:
 
     @staticmethod
     def iot_VoiceMsg_group(ctx: GroupMsg, chat: Chat) -> List[Message]:
+        if not VOICE_SUPPORTED:
+            content = "[Voice Message, Please check it on your phone]"
+            return [efb_unsupported_wrapper(content)]
         refine_voices = refine_voice_group_msg(ctx)
         if refine_voices:
             try:
-                f = download_file(refine_voices.VoiceUrl)
+                input_file = download_file(refine_voices.VoiceUrl)
             except Exception as e:
                 logger.warning(f"Failed to download the voice! {e}")
+                content = "[Voice Message, Please check it on your phone]"
+                return [efb_unsupported_wrapper(content)]
             else:
-                pass  # fixme
-        pass
+                output_file = tempfile.NamedTemporaryFile()
+                if not Silkv3.decode(input_file.name, output_file.name):
+                    content = "[Voice Message, Please check it on your phone]"
+                    return [efb_unsupported_wrapper(content)]
+                pydub.AudioSegment.from_raw(file=output_file, sample_width=2, frame_rate=24000, channels=1) \
+                    .export(output_file, format="ogg", codec="libopus",
+                            parameters=['-vbr', 'on'])
+                return [efb_voice_wrapper(output_file)]
+        else:
+            content = "[Voice Message, Please check it on your phone]"
+            return [efb_unsupported_wrapper(content)]
 
     @staticmethod
     def iot_GroupFileMsg_group(ctx: GroupMsg, chat: Chat) -> List[Message]:

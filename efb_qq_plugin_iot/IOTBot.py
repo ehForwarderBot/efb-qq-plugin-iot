@@ -2,10 +2,12 @@
 import base64
 import hashlib
 import logging
+import tempfile
 import uuid
 from typing import Collection, BinaryIO, Dict, Any, List, Union, IO
 import threading
 
+import pydub
 from cachetools import TTLCache
 from efb_qq_slave import BaseClient
 from ehforwarderbot import Chat, Message, Status, coordinator, MsgType
@@ -20,6 +22,11 @@ from efb_qq_plugin_iot.ChatMgr import ChatMgr
 from efb_qq_plugin_iot.CustomTypes import IOTGroup, EFBGroupChat, EFBPrivateChat, IOTGroupMember, \
     EFBGroupMember
 from efb_qq_plugin_iot.Utils import download_user_avatar, download_group_avatar, iot_at_user, process_quote_text
+try:
+    import Silkv3
+    VOICE_SUPPORTED = True
+except ImportError:
+    VOICE_SUPPORTED = False
 
 
 class iot(BaseClient):
@@ -48,8 +55,8 @@ class iot(BaseClient):
         self.bot = Botoy(qq=self.uin, host=self.host, port=self.port)
         self.action = Action(qq=self.uin, host=self.host, port=self.port)
         self.channel = channel
+        ChatMgr.slave_channel = channel
         self.iot_msg = IOTMsgProcessor(self.uin)
-        slave_channel = self.channel
 
         @self.bot.when_connected
         def on_ws_connected():
@@ -172,7 +179,20 @@ class iot(BaseClient):
             self.iot_send_image_message(chat_type, chat_uid, msg.file, msg.text)
             msg.uid = str(uuid.uuid4())
         elif msg.type is MsgType.Voice:
-            pass  # todo
+            self.logger.info(f"[{msg.uid}] Voice.")
+            if not VOICE_SUPPORTED:
+                self.iot_send_text_message(chat_type, chat_uid, "[语音消息]")
+            else:
+                pydub.AudioSegment.from_file(msg.file).export(msg.file, format='s16le',
+                                                              parameters=["-ac", "1", "-ar", "24000"])
+                output_file = tempfile.NamedTemporaryFile()
+                if not Silkv3.encode(msg.file.name, output_file.name):
+                    self.iot_send_text_message(chat_type, chat_uid, "[语音消息]")
+                else:
+                    self.iot_send_voice_message(chat_type, chat_uid, output_file)
+                if msg.text:
+                    self.iot_send_text_message(chat_type, chat_uid, msg.text)
+            msg.uid = str(uuid.uuid4())
         return msg
 
     def send_status(self, status: 'Status'):
@@ -192,7 +212,6 @@ class iot(BaseClient):
             friend_name = friend['NickName']
             friend_remark = friend['Remark']
             new_friend = EFBPrivateChat(
-                channel=self.channel,
                 uid=f"friend_{friend_uin}",
                 name=friend_name,
                 alias=friend_remark
@@ -210,7 +229,6 @@ class iot(BaseClient):
             group_name = group['GroupName']
             group_id = group['GroupId']
             new_group = EFBGroupChat(
-                channel=self.channel,
                 uid=f"group_{group_id}",
                 name=group_name
             )
@@ -355,3 +373,17 @@ class iot(BaseClient):
         elif chat_type == 'group':
             chat_uin = int(chat_uin)
             self.action.sendGroupPic(group=chat_uin, picBase64Buf=image_base64, fileMd5=md5_sum, content=content)
+
+    def iot_send_voice_message(self, chat_type: str, chat_uin: str, file: IO):
+        voice_base64 = base64.b64encode(file.read()).decode("UTF-8")
+        if chat_type == 'private':
+            user_info = chat_uin.split('_')
+            chat_uin = int(user_info[0])
+            chat_origin = int(user_info[1])
+            self.action.sendPrivateVoice(user=chat_uin, group=chat_origin, voiceBase64Buf=voice_base64)
+        elif chat_type == 'friend':
+            chat_uin = int(chat_uin)
+            self.action.sendFriendVoice(user=chat_uin, voiceBase64Buf=voice_base64)
+        elif chat_type == 'group':
+            chat_uin = int(chat_uin)
+            self.action.sendGroupVoice(group=chat_uin, voiceBase64Buf=voice_base64)
