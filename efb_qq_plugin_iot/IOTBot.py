@@ -310,6 +310,7 @@ class iot(BaseClient):
         while count <= 1:
             if not self.info_list.get('friend', None):
                 self.update_friend_list()
+                self.get_friends()
                 count += 1
             else:
                 break
