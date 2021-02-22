@@ -69,7 +69,7 @@ class iot(BaseClient):
         @self.bot.on_friend_msg
         def on_friend_msg(ctx: FriendMsg):
             self.logger.debug(ctx)
-            if int(ctx.FromUin) == self.uin and IOTConfig.configs.get('receive_self_msg', False):
+            if int(ctx.FromUin) == int(self.uin) and not IOTConfig.configs.get('receive_self_msg', True):
                 self.logger.info("Received self message and flag set. Cancel delivering...")
                 return
             remark_name = self.get_friend_remark(ctx.FromUin)
@@ -113,6 +113,9 @@ class iot(BaseClient):
         def on_group_msg(ctx: GroupMsg):
             # OPQbot has no indicator for anonymous user, so we have to test the uin
             nickname = ctx.FromNickName
+            if int(ctx.FromUserId) == int(self.uin) and not IOTConfig.configs.get('receive_self_msg', True):
+                self.logger.info("Received self message and flag set. Cancel delivering...")
+                return
             remark_name = self.get_friend_remark(ctx.FromUserId)
             if not remark_name:
                 info = self.get_stranger_info(ctx.FromUserId)
