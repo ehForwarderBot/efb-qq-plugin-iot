@@ -17,6 +17,7 @@ from ehforwarderbot.types import ChatID
 from botoy import Botoy, GroupMsg, FriendMsg, EventMsg, Action
 
 from efb_qq_plugin_iot.IOTConfig import IOTConfig
+from efb_qq_plugin_iot.IOTFactory import IOTFactory
 from efb_qq_plugin_iot.IOTMsgProcessor import IOTMsgProcessor
 from efb_qq_plugin_iot.ChatMgr import ChatMgr
 from efb_qq_plugin_iot.CustomTypes import IOTGroup, EFBGroupChat, EFBPrivateChat, IOTGroupMember, \
@@ -54,6 +55,8 @@ class iot(BaseClient):
         IOTConfig.configs = self.client_config
         self.bot = Botoy(qq=self.uin, host=self.host, port=self.port)
         self.action = Action(qq=self.uin, host=self.host, port=self.port)
+        IOTFactory.bot = self.bot
+        IOTFactory.action = self.action
         self.channel = channel
         ChatMgr.slave_channel = channel
         self.iot_msg = IOTMsgProcessor(self.uin)

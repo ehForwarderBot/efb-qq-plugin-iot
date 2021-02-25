@@ -48,7 +48,8 @@ setup(
         "ehforwarderbot",
         "requests",
         "python-magic",
-        "cachetools"
+        "cachetools",
+        "pydub"
     ],
     entry_points={
         'ehforwarderbot.qq.plugin': 'iot = efb_qq_plugin_iot:IOTBot'
