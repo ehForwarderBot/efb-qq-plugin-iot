@@ -8,6 +8,7 @@ from typing import Collection, BinaryIO, Dict, Any, List, Union, IO
 import threading
 
 import pydub
+import socketio
 from cachetools import TTLCache
 from efb_qq_slave import BaseClient
 from ehforwarderbot import Chat, Message, Status, coordinator, MsgType
@@ -45,6 +46,9 @@ class iot(BaseClient):
 
     group_member_list = TTLCache(maxsize=20, ttl=3600)
     stranger_cache = TTLCache(maxsize=100, ttl=3600)
+
+    sio: socketio.Client = None
+    event: threading.Event = None
 
     def __init__(self, client_id: str, config: Dict[str, Any], channel):
         super().__init__(client_id, config)
@@ -315,11 +319,20 @@ class iot(BaseClient):
         return self.group_member_list[group_id]
 
     def poll(self):
-        threading.Thread(target=self.bot.run, daemon=True).start()
+        # threading.Thread(target=self.bot.run, daemon=True).start()
         # self.bot.run()
+        self.sio = self.bot.run_no_wait()
+        self.event = threading.Event()
+        self.event.wait()
+        self.logger.info("IOTBot quited.")
 
     def stop_polling(self):
-        self.bot.close()
+        if self.sio:
+            self.sio.disconnect()
+        if self.bot.pool:
+            self.bot.pool.shutdown(wait=False)
+        if self.event:
+            self.event.set()
 
     def update_friend_list(self):
         """
@@ -372,13 +385,13 @@ class iot(BaseClient):
             chat_uin = int(user_info[0])
             chat_origin = int(user_info[1])
             self.action.sendPrivatePic(user=chat_uin, group=chat_origin, picBase64Buf=image_base64,
-                                       fileMd5=md5_sum, content=content)
+                                       picMd5s=md5_sum, content=content)
         elif chat_type == 'friend':
             chat_uin = int(chat_uin)
-            self.action.sendFriendPic(user=chat_uin, picBase64Buf=image_base64, fileMd5=md5_sum, content=content)
+            self.action.sendFriendPic(user=chat_uin, picBase64Buf=image_base64, picMd5s=md5_sum, content=content)
         elif chat_type == 'group':
             chat_uin = int(chat_uin)
-            self.action.sendGroupPic(group=chat_uin, picBase64Buf=image_base64, fileMd5=md5_sum, content=content)
+            self.action.sendGroupPic(group=chat_uin, picBase64Buf=image_base64, picMd5s=md5_sum, content=content)
 
     def iot_send_voice_message(self, chat_type: str, chat_uin: str, file: IO):
         voice_base64 = base64.b64encode(file.read()).decode("UTF-8")

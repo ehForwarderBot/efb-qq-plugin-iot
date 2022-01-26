@@ -4,8 +4,8 @@ from os.path import isfile, join
 
 from setuptools import setup, find_packages, Extension
 
-if sys.version_info < (3, 6):
-    raise Exception("Python 3.6 or higher is required. Your version is %s." % sys.version)
+if sys.version_info < (3, 7):
+    raise Exception("Python 3.7 or higher is required. Your version is %s." % sys.version)
 
 __version__ = ""
 exec(open('efb_qq_plugin_iot/__version__.py').read())
@@ -28,7 +28,7 @@ setup(
     author_email='milkice@milkice.me',
     url='https://github.com/milkice233/efb-qq-plugin-iot',
     license='GPLv3',
-    python_requires='>=3.6',
+    python_requires='>=3.7',
     keywords=['ehforwarderbot', 'EH Forwarder Bot', 'EH Forwarder Bot Slave Channel',
               'qq', 'chatbot', 'EQS', 'iot', 'OPQBot'],
     classifiers=[
@@ -37,14 +37,13 @@ setup(
         "Intended Audience :: Developers",
         "Intended Audience :: End Users/Desktop",
         "Programming Language :: Python :: 3 :: Only",
-        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Topic :: Communications :: Chat",
         "Topic :: Utilities"
     ],
     install_requires=[
         "efb-qq-slave",
-        "botoy",
+        "botoy>=7.12",
         "ehforwarderbot",
         "requests",
         "python-magic",
