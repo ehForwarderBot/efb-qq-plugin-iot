@@ -384,14 +384,13 @@ class iot(BaseClient):
             user_info = chat_uin.split('_')
             chat_uin = int(user_info[0])
             chat_origin = int(user_info[1])
-            self.action.sendPrivatePic(user=chat_uin, group=chat_origin, picBase64Buf=image_base64,
-                                       picMd5s=md5_sum, content=content)
+            self.action.sendPrivatePic(user=chat_uin, group=chat_origin, picBase64Buf=image_base64, content=content)
         elif chat_type == 'friend':
             chat_uin = int(chat_uin)
-            self.action.sendFriendPic(user=chat_uin, picBase64Buf=image_base64, picMd5s=md5_sum, content=content)
+            self.action.sendFriendPic(user=chat_uin, picBase64Buf=image_base64, content=content)
         elif chat_type == 'group':
             chat_uin = int(chat_uin)
-            self.action.sendGroupPic(group=chat_uin, picBase64Buf=image_base64, picMd5s=md5_sum, content=content)
+            self.action.sendGroupPic(group=chat_uin, picBase64Buf=image_base64, content=content)
 
     def iot_send_voice_message(self, chat_type: str, chat_uin: str, file: IO):
         voice_base64 = base64.b64encode(file.read()).decode("UTF-8")
